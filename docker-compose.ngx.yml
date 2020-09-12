@@ -1,0 +1,36 @@
+version: '2.3'
+
+services:
+  trainingdataioviewer:
+    image: trainingdataio/tdviewer:v2.0-ngx
+    build:
+      context: .
+      args:
+        USER: "trainingdataio"
+        DB_MOUNT: ${DB_MOUNT}
+        IMAGE_MOUNT: ${IMAGE_MOUNT}
+    environment:
+      NODE_ENV: production
+      DISPLAY: ${DISPLAY}
+    ports:
+      - 8090:8090
+      - 9090:9090
+      - 8000:8000
+    tty: true
+    volumes:
+      - ${DB_MOUNT}:/home/user/trainingdataio/tdviewer/db
+      - ${IMAGE_MOUNT}:/home/user/trainingdataio/tdviewer/images
+      - /tmp/:/tmp/
+    extra_hosts:
+      - parenthost:$PARENTHOST
+
+  nvidiaclaratrain:
+    image: nvcr.io/nvidia/clara-train-sdk:v3.0
+    command: start_aas.sh
+    runtime: nvidia
+    restart: always
+    ports:
+      - "5000:5000"
+    tty: true
+    environment:
+      NVIDIA_VISIBLE_DEVICES: all
