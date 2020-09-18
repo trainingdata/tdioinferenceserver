@@ -3,16 +3,18 @@
 WORKSPACE_DIR=/workspace
 SAMPLES_DIR=$WORKSPACE_DIR/samples
 HOME_DIR=$HOME
-echo $HOME_DIR
-MMARS_DIR="$HOME_DIR/mmars"
-echo $MMARS_DIR
 KNEE_MODEL=knee
 VERTEBRA_MODEL=vertebra
+MMARS_DIR="$HOME_DIR/mmars"
+echo "MMARS directory...$MMARS_DIR"
+echo "Workspace directory...$WORKSPACE_DIR"
+echo "Sample directory...$SAMPLES_DIR"
+KNEE_MODEL=knee2d
+VERTEBRA_MODEL=vertebra2d
 COVID19_GGOMODEL=covid19/trainingdataio_covid19_ct_lung_seg_v1
 CONTAINER_AIAA_DIR=/var/nvidia/aiaa
 CONTAINER_AIAA_MMAR_DIR=$CONTAINER_AIAA_DIR/mmars
 CONTAINER_AIAA_SAMPLES_DIR=$CONTAINER_AIAA_DIR/samples
-
 
 # check directories
 if [ ! -d "$WORKSPACE_DIR" ]; then
@@ -47,13 +49,13 @@ if [ ! -d "$COVID19_DIR" ]; then
     exit
 fi
 
-export PARENTHOST=$(ifconfig | grep -E "([0-9]{1,3}\.){3}[0-9]{1,3}" | grep -v 127.0.0.1 | awk '{ print $2 }' | cut -f2 -d: | head -n1)
+#export PARENTHOST=$(ifconfig | grep -E "([0-9]{1,3}\.){3}[0-9]{1,3}" | grep -v 127.0.0.1 | awk '{ print $2 }' | cut -f2 -d: | head -n1)
 #export DB_MOUNT=/tmp && export IMAGE_MOUNT=/home/user/images && docker-compose -f docker-compose.ngx.yml up -d
 
 CONTAINERID=`docker run -d --name=nvidiaclara --runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=0 --shm-size=6g --ulimit memlock=-1 --ulimit stack=67108864 -it --rm  -p 5000:80 -v $MMARS_DIR:$CONTAINER_AIAA_MMAR_DIR -v $MMARS_DIR:/workspace/mmars -v $SAMPLES_DIR:$CONTAINER_AIAA_SAMPLES_DIR nvcr.io/nvidia/clara-train-sdk:v3.0 start_aas.sh --debug 1`
 
 echo starting ... ${CONTAINERID}
-countdown=4
+countdown=12
 while [ $countdown -gt 0 ]
   do
     sleep 5
@@ -65,11 +67,24 @@ echo started ... ${CONTAINERID}
 docker cp $KNEE_DIR/CustomTransformations-aiaa.py $CONTAINERID:/var/nvidia/aiaa/transforms/
 docker cp $KNEE_DIR/CustomTransformations.py $CONTAINERID:/var/nvidia/aiaa/transforms/
 
+<<<<<<< HEAD
+sleep 5
 curl -X PUT "http://127.0.0.1:5000/admin/model/knee" -F "config=@${KNEE_DIR}/config/config_aiaa.json;type=application/json" -F "data=@${KNEE_DIR}/models/model.zip"
 
+sleep 5
 curl -X PUT "http://127.0.0.1:5000/admin/model/vertebra" -F "config=@${VERTEBRA_DIR}/config/config_aiaa.json;type=application/json" -F "data=@${VERTEBRA_DIR}/models/model.zip"
+=======
+curl -X PUT "http://127.0.0.1:5000/admin/model/knee2d" -F "config=@${KNEE_DIR}/config/config_aiaa.json;type=application/json" -F "data=@${KNEE_DIR}/models/model.zip"
 
-sudo chown -R gaurav_roundtableai_com:1900958845 /workspace/
-sudo chmod -R a+w /workspace
-sudo chmod -R a+r /workspace
+curl -X PUT "http://127.0.0.1:5000/admin/model/vertebra2d" -F "config=@${VERTEBRA_DIR}/config/config_aiaa.json;type=application/json" -F "data=@${VERTEBRA_DIR}/models/model.zip"
+>>>>>>> fb398db7c3e1b395654b0899e1cbcd350f9e1c76
+
+USER=`id -uz --name`
+GROUP=`id -gz --name`
+echo "USER=$USER,GROUP=$GROUP"
+sudo chown -R $USER:$GROUP $WORKSPACE_DIR
+sudo chmod -R a+w $WORKSPACE_DIR
+sudo chmod -R a+r $WORKSPACE_DIR
+
+#run flask server
 python3 flaskserver/app.py

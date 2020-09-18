@@ -4,10 +4,27 @@ import subprocess
 import json
 from .media_extractors import get_mime
 from pyunpack import Archive
+import time
+
+processstdout = {}
+
+def parseProgress(pid, stdoutfile):
+  try:
+    command = ['ps', str(pid)]
+    p = subprocess.Popen(command, stdout=subprocess.PIPE, shell=False)
+    output,err = p.communicate()
+    if str(pid) in output.decode('utf-8'):
+      # running
+      return 50
+  except Exception as ex:
+    print(str(ex))
+  # not running anymore  
+  return 100
 
 class finetune(object):
   def post(args, archivefile) -> dict:
     try:
+     global processstdout
      mlmodel = args['mlmodel'][0]
      modelversion = args['modelversion'][0]
      # get the new training data files & masks
@@ -56,6 +73,7 @@ class finetune(object):
                  raise Exception('{} did not work {}'.format(shellcommand, err))
              else:
                  status = str(proc.pid)
+                 processstdout[proc.pid] = proc.stdout
     except Exception as ex:
         status = "error exception: " + str(ex)
         print('failed:', status)
@@ -63,9 +81,28 @@ class finetune(object):
 
     return status, 200    
 
-  def get(self, finetuneid) -> dict:
+  def get(finetuneid) -> dict:
     try:
+        global processstdout
+        finetuneid = int(finetuneid)
         print(finetuneid)
+        retval = {"status": "", "progress": 0 , "timestamp": 0, "reason": "", "state": ""}
+        if not finetuneid in processstdout:
+          return json.dumps(retval), 404
+        else:
+          progress = parseProgress(finetuneid, processstdout[finetuneid])
+          if progress == 100:
+            retval['state'] = 'finished'
+            retval['status'] = 'finished'
+            retval['progress'] = 100 
+          else:
+            retval['state'] = 'running'
+            retval['status'] = 'running'
+            retval['progress'] = 56
+            
+          retval['timestamp'] = time.time()
+          print('GET /finetune', retval)
+          return json.dumps(retval), 200
     except Exception as ex:
       status = "error exception: " + str(ex)        
       return str(status), 400
