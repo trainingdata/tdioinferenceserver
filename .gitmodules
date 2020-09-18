@@ -1,0 +1,3 @@
+[submodule "nvidiaclara"]
+	path = nvidiaclara
+	url = https://github.com/trainingdata/nvidiaclara
