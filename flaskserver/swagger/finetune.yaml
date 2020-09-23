@@ -1,0 +1,48 @@
+swagger: "2.0"
+
+info:
+  title: "fine tune model"
+  version: "1.0"
+
+basePath: /v1
+
+paths:
+  /finetune:
+    post:
+      operationId: api.finetune.finetune.post
+      consumes:
+        - multipart/form-data
+      parameters:
+        - name: args
+          in: body
+          schema:
+            $ref: '#definitions/args'
+        - name: archivefile
+          in: formData
+          type: file
+      responses:
+        200:
+          description: OK
+    get:
+      operationId: api.finetune.finetune.get
+      parameters:
+        - name: finetuneid
+          in: query
+          type: string
+      responses:
+        200:
+          description: OK
+
+
+definitions:
+  args:
+    type: object
+    properties:
+      mlmodel:
+        type: array
+        items:
+          type: string
+      modelversion:
+        type: array
+        items:
+          type: string
