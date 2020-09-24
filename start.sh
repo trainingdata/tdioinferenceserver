@@ -1,11 +1,12 @@
 #!/bin/bash
 
+PWD=`pwd`
 HOME_DIR=$HOME
 WORKSPACE_DIR=$HOME_DIR/workspace
 SAMPLES_DIR=$WORKSPACE_DIR/samples
 KNEE_MODEL=knee
 VERTEBRA_MODEL=vertebra
-#MMARS_DIR="$HOME_DIR/mmars"
+MMARS_DIR=$PWD/nvidiaclara/mmars
 echo "MMARS directory...$MMARS_DIR"
 echo "Workspace directory...$WORKSPACE_DIR"
 echo "Sample directory...$SAMPLES_DIR"
@@ -29,8 +30,8 @@ if [ ! -d "$MMARS_DIR" ]; then
     exit
 fi
 
-USER=`id -uz --name`
-GROUP=`id -gz --name`
+USER=`id -u --name`
+GROUP=`id -g --name`
 echo "USER=$USER,GROUP=$GROUP"
 sudo chown -R $USER:$GROUP $WORKSPACE_DIR
 sudo chmod -R a+w $WORKSPACE_DIR
@@ -85,8 +86,9 @@ sudo chmod -R a+r $MMARS_DIR
 docker cp $KNEE_DIR/CustomTransformations-aiaa.py $CONTAINERID:/var/nvidia/aiaa/transforms/
 docker cp $KNEE_DIR/CustomTransformations.py $CONTAINERID:/var/nvidia/aiaa/transforms/
 
-sleep 5
 echo 'Installing knee2d model...'
+curl -X PUT "http://127.0.0.1:5000/admin/model/knee" -F "config=@${KNEE_DIR}/config/config_aiaa.json;type=application/json" -F "data=@${KNEE_DIR}/models/model.zip"
+sleep 5
 curl -X PUT "http://127.0.0.1:5000/admin/model/knee" -F "config=@${KNEE_DIR}/config/config_aiaa.json;type=application/json" -F "data=@${KNEE_DIR}/models/model.zip"
 
 sleep 5
@@ -94,4 +96,4 @@ echo 'Installing vertebra2d model...'
 curl -X PUT "http://127.0.0.1:5000/admin/model/vertebra" -F "config=@${VERTEBRA_DIR}/config/config_aiaa.json;type=application/json" -F "data=@${VERTEBRA_DIR}/models/model.zip"
 
 #run flask server
-python3 flaskserver/app.py
+python3 flaskserver/app.py &
