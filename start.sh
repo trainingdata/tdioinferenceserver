@@ -2,7 +2,7 @@
 
 PWD=`pwd`
 HOME_DIR=$HOME
-WORKSPACE_DIR=$HOME_DIR/workspace
+WORKSPACE_DIR=$HOME_DIR/workspace/trainingdataio
 SAMPLES_DIR=$WORKSPACE_DIR/samples
 KNEE_MODEL=knee
 VERTEBRA_MODEL=vertebra
@@ -21,7 +21,7 @@ CONTAINER_AIAA_SAMPLES_DIR=$CONTAINER_AIAA_DIR/samples
 if [ ! -d "$WORKSPACE_DIR" ]; then
     # exit
     echo "workspace directory not found: ${WORKSPACE_DIR}"
-    exit
+    mkdir -p $WORKSPACE_DIR
 fi
 
 if [ ! -d "$MMARS_DIR" ]; then
