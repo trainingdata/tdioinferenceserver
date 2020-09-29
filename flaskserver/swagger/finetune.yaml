@@ -4,10 +4,10 @@ info:
   title: "fine tune model"
   version: "1.0"
 
-basePath: /v1
+basePath: /v1/finetune
 
 paths:
-  /finetune:
+  /:
     post:
       operationId: api.finetune.finetune.post
       consumes:
