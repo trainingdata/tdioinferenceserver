@@ -2,3 +2,6 @@ Flask
 connexion
 Flask-Injector
 fastavro
+numpy
+pillow
+pyunpack
