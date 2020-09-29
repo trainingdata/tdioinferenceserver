@@ -87,13 +87,13 @@ docker cp $KNEE_DIR/CustomTransformations-aiaa.py $CONTAINERID:/var/nvidia/aiaa/
 docker cp $KNEE_DIR/CustomTransformations.py $CONTAINERID:/var/nvidia/aiaa/transforms/
 
 echo 'Installing knee2d model...'
-curl -X PUT "http://127.0.0.1:5000/admin/model/knee" -F "config=@${KNEE_DIR}/config/config_aiaa.json;type=application/json" -F "data=@${KNEE_DIR}/models/model.zip"
+curl -X PUT "http://127.0.0.1:5000/admin/model/knee2d" -F "config=@${KNEE_DIR}/config/config_aiaa.json;type=application/json" -F "data=@${KNEE_DIR}/models/model.zip"
 sleep 5
-curl -X PUT "http://127.0.0.1:5000/admin/model/knee" -F "config=@${KNEE_DIR}/config/config_aiaa.json;type=application/json" -F "data=@${KNEE_DIR}/models/model.zip"
+curl -X PUT "http://127.0.0.1:5000/admin/model/knee2d" -F "config=@${KNEE_DIR}/config/config_aiaa.json;type=application/json" -F "data=@${KNEE_DIR}/models/model.zip"
 
 sleep 5
 echo 'Installing vertebra2d model...'
-curl -X PUT "http://127.0.0.1:5000/admin/model/vertebra" -F "config=@${VERTEBRA_DIR}/config/config_aiaa.json;type=application/json" -F "data=@${VERTEBRA_DIR}/models/model.zip"
+curl -X PUT "http://127.0.0.1:5000/admin/model/vertebra2d" -F "config=@${VERTEBRA_DIR}/config/config_aiaa.json;type=application/json" -F "data=@${VERTEBRA_DIR}/models/model.zip"
 
 #run flask server
 python3 flaskserver/app.py &

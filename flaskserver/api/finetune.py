@@ -30,7 +30,8 @@ class finetune(object):
      # get the new training data files & masks
      status = ''
      temp_dir = '/tmp'
-     workspace_dir = '/workspace'
+     home_dir = os.environ.get('HOME')
+     workspace_dir = os.path.join(home_dir, 'workspace')
      # TODO clear samples dir path
 
      if not mlmodel or mlmodel == '':
@@ -41,7 +42,6 @@ class finetune(object):
     
      mlmodelid = mlmodel
      f = archivefile
-     print(dir(f))
      totalsize = 0
      totalsize += f.content_length
      mime = get_mime(f.filename)
@@ -74,6 +74,7 @@ class finetune(object):
              else:
                  status = str(proc.pid)
                  processstdout[proc.pid] = proc.stdout
+                 print('Sucess: {} {}'.format(status, shellcommand))
     except Exception as ex:
         status = "error exception: " + str(ex)
         print('failed:', status)
