@@ -37,6 +37,6 @@ cd ..
 ```
 ## Add ML Model to "ML Models Library"
 ## Create a Labeling Job
-As shown in ![video](https://youtu.be/cjiNQ9DCtLo):
-1. create a labeling job with AI-Assisted annotation.
+As shown in this video https://youtu.be/cjiNQ9DCtLo:
+1. Create a labeling job with AI-Assisted annotation.
 2. After manually cleaning AI-assisted annotations, launch re-train ML Model
