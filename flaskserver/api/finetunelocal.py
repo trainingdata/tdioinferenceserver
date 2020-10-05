@@ -9,7 +9,11 @@ from .dicom import pydicom_to_npy, png_to_npy, generateBlackNumpyLabel
 from .export import hex_to_rgb, exportMasks, getAllClasses, getFileName
 import traceback
 from .utils import homeBaseGet, homeBasePost, homeBasePut, saveInferenceStatus
+import random
+import math
 
+DATASET_JSON_STR = '{  "description": "",  "label_format": [1],  "name": "",  "numTest": 0,  "numTraining": 0,  "test": [],  "training": [{}],  "validation": [{}]    }'
+ENV_JSON_STR = '{{  "MMAR_ROOT": "/var/nvidia/aiaa/mmars/{}/",  "DATA_ROOT": "/var/nvidia/aiaa/samples/",  "DATASET_JSON": "/var/nvidia/aiaa/samples/{}/dataset.json",  "PROCESSING_TASK": "segmentation",  "MMAR_CKPT_DIR": "/var/nvidia/aiaa/mmars/{}/models/{}",  "MMAR_CKPT":"/var/nvidia/aiaa/mmars/{}/models/{}/model_final.ckpt"}}'
 def rgb2gray(rgb):
   r, g, b = hex_to_rgb(rgb)
   #r = (rgb >> 16)
@@ -43,7 +47,57 @@ def getLabelMap(labelinginterface):
     print('getLabelMap():', labelmap)
     return labelmap
 
-def get(auth_token, taskid, jobid, mlmodelid, annotatoremail, modelversion):
+def writeEnvDatasetJson(output_dir, newlabeleddataset, mlmodelname, outputmodelversion, inputmodelversion, percenttest, percenttraining, percentvalidation):
+    try:
+      testset = []
+      validationset = []
+      trainingset = []
+      print(newlabeleddataset, newlabeleddataset.keys())
+      alllabels = list(newlabeleddataset.keys())
+      print('here2', len(alllabels))
+      numTest = math.floor((percenttest / 100) * len(alllabels))
+      numTraining = math.floor((percenttraining / 100) * len(alllabels))
+      numValidation = math.floor((percentvalidation / 100) * len(alllabels))
+      print('here3', numTest, numTraining, numValidation)
+      random.shuffle(alllabels)
+      count = 0
+      for label in alllabels:
+        count = count + 1
+        image = newlabeleddataset[label]
+        print(count, 'label', label, 'image', image) 
+        if count >= 0 and count <= numTest:
+          testset.append(image)
+          print('test:', count)
+        if count > numTest and count <= numTest+numTraining:
+          trainingset.append({'image': image, 'label':label})
+          print('train:', count)
+        if count > numTraining+numTest and count <= (numTest + numTraining + numValidation):
+          validationset.append({'image': image, 'label':label})
+          print('validation:', count)
+      
+      datasetjsonfilename = os.path.join(output_dir, 'dataset.json')
+      datasetjson = json.loads(DATASET_JSON_STR)
+      datasetjson['description'] = mlmodelname 
+      datasetjson['name'] = mlmodelname
+      datasetjson['numTest'] = numTest
+      datasetjson['numTraining'] = numTraining
+      datasetjson['numValidation'] = numValidation
+      datasetjson['training'] = trainingset
+      datasetjson['test'] = testset
+      datasetjson['validation'] = validationset
+      with open(datasetjsonfilename, 'w') as datasetjsonfile:
+        datasetjsonfile.write(json.dumps(datasetjson, ensure_ascii=False, indent=4, separators=(',', ': ')))
+
+      envconfigjson = ENV_JSON_STR.format(mlmodelname, mlmodelname, mlmodelname, outputmodelversion, mlmodelname, inputmodelversion)
+      envconfigjsonfilename = os.path.join(output_dir, 'environment.json')
+      with open(envconfigjsonfilename, 'w') as envjsonfile:
+        envjsonfile.write(json.dumps(json.loads(envconfigjson), ensure_ascii=False, indent=4, separators=(',', ': ')))
+        
+    except Exception as ex:
+        print('Failed to write dataset.json: {}'.format(str(ex)))
+        raise ex
+  
+def get(auth_token, taskid, jobid, mlmodelid, annotatoremail, inputmodelversion, outputmodelversion, percenttraining, percenttest, percentvalidation):
   try:
     print(taskid, jobid, mlmodelid)
     response = homeBaseGet(auth_token, '/task/' + str(taskid))
@@ -70,6 +124,7 @@ def get(auth_token, taskid, jobid, mlmodelid, annotatoremail, modelversion):
         print("MlModel missing in the Task - /tdmlmodel/finetune")
         return "Invalid Request. Missing mlmodel", 400
     mlmodel['jsonconfig'] = json.loads(mlmodel['jsonconfig'])
+    mlmodelname = mlmodel['jsonconfig']['identifier']
     # mlmodel input output
     mlmodelinput = mlmodel['jsonconfig']['inputfiletype']
     mlmodeloutput = mlmodel['jsonconfig']['outputfiletype']
@@ -96,7 +151,8 @@ def get(auth_token, taskid, jobid, mlmodelid, annotatoremail, modelversion):
     background_color = hex_to_rgb('#000000')
     mask_bitness = 24
     exportMasks(jobid, projectjobjson, classes, output_dir, background_color, mask_bitness, mask_dirname='labels', exclude_dirname=True)
-    
+
+    newlabeleddataset = {}
     imageCount = 0
     for series in projectjobjson['images']['seriesList']:
         for instance in series['instanceList']:
@@ -125,7 +181,8 @@ def get(auth_token, taskid, jobid, mlmodelid, annotatoremail, modelversion):
             elif ".dcm" in ext.lower():
                 # if mlmodelinput == '.npy':
                   print('elif')
-                  pydicom_to_npy(newfiles[0], mlmodelinputwidth, mlmodelinputheight)
+                  numpyfile = pydicom_to_npy(newfiles[0], mlmodelinputwidth, mlmodelinputheight)
+                  newlabeleddataset[npylabelfile.split('samples/')[1]] = numpyfile.split('samples/')[1]
                   os.remove(newfiles[0])
                   if not os.path.exists(pnglabelfile):
                     print('generateBlackNumpyLabel', os.path.exists(pnglabelfile))
@@ -134,8 +191,12 @@ def get(auth_token, taskid, jobid, mlmodelid, annotatoremail, modelversion):
                     png_to_npy(pnglabelfile, npylabelfile, mlmodelinputwidth, mlmodelinputheight, labelmap)
             else:
                 print('else')
-                png_to_npy(newfiles[0], labelfile, mlmodelinputwidth, mlmodelinputheight, labelmap)
-                np.save(labelfile, data)
+                png_to_npy(newfiles[0], npylabelfile, mlmodelinputwidth, mlmodelinputheight, labelmap)
+                np.save(npylabelfile, data)
+
+    # write dataset.json
+    writeEnvDatasetJson(output_dir, newlabeleddataset, mlmodelname, outputmodelversion, inputmodelversion, percenttest, percenttraining, percentvalidation)
+    
     # path to build archive
     archivename = str(taskid) + '-' + annotatoremail + '-' + str(datetime.datetime.now().date()) + '.tar.gz'
     os.chdir(workspace_dir)
@@ -145,10 +206,10 @@ def get(auth_token, taskid, jobid, mlmodelid, annotatoremail, modelversion):
     tar.close()
 
     #uploadedFile = uploadFileToS3(settings.AWS_STORAGE_BUCKET_NAME, os.path.join('export', str(task.id), str(datetime.datetime.now().date()), archivename), tar.name)
-    url = os.path.join(mlmodel['serverurl'].replace('5000','5002'), 'v1/finetune')
+    url = os.path.join(mlmodel['serverurl'].replace('5000','9090'), 'v1/finetune')
     data = {}
-    data['mlmodel'] = mlmodel['name']
-    data['modelversion'] = modelversion 
+    data['mlmodel'] = mlmodelname
+    data['modelversion'] = outputmodelversion 
     files = {'archivefile':open(archivename, 'rb')}
     response = requests.post(url, data=data, files=files)
     if response.status_code != 200:

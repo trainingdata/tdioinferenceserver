@@ -62,9 +62,21 @@ paths:
         - name: annotatoremail
           in: query
           type: string
-        - name: modelversion
+        - name: inputmodelversion
           in: query
           type: string
+        - name: outputmodelversion
+          in: query
+          type: string
+        - name: percenttraining
+          in: query
+          type: integer
+        - name: percenttest
+          in: query
+          type: integer
+        - name: percentvalidation
+          in: query
+          type: integer
       responses:
         200:
           description: OK
