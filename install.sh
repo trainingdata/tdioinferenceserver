@@ -26,4 +26,5 @@ docker pull nvcr.io/nvidia/clara-train-sdk:v3.0
 
 # prepare light web server
 sudo apt-get install -y python3-pip
+sudo apt-get install -y libsm6 libxext6 libxrender-dev
 pip3 install -r flaskserver/requirements.txt

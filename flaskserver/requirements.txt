@@ -10,3 +10,5 @@ Cython
 pycocotools==2.0.0
 opencv-python==4.1.0.25
 opencv-contrib-python==4.1.0.25
+matplotlib
+patool

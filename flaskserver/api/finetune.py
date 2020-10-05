@@ -31,7 +31,7 @@ class finetune(object):
      status = ''
      temp_dir = '/tmp'
      home_dir = os.environ.get('HOME')
-     workspace_dir = os.path.join(home_dir, 'workspace')
+     workspace_dir = os.path.join(home_dir, 'workspace', 'trainingdataio')
      # TODO clear samples dir path
 
      if not mlmodel or mlmodel == '':

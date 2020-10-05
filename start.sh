@@ -63,7 +63,7 @@ fi
 #export PARENTHOST=$(ifconfig | grep -E "([0-9]{1,3}\.){3}[0-9]{1,3}" | grep -v 127.0.0.1 | awk '{ print $2 }' | cut -f2 -d: | head -n1)
 #export DB_MOUNT=/tmp && export IMAGE_MOUNT=/home/user/images && docker-compose -f docker-compose.ngx.yml up -d
 
-CONTAINERID=`docker run -d --name=nvidiaclara --runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=0 --shm-size=6g --ulimit memlock=-1 --ulimit stack=67108864 -it --rm  -p 5000:80 -v $MMARS_DIR:$CONTAINER_AIAA_MMAR_DIR -v $MMARS_DIR:/workspace/mmars -v $SAMPLES_DIR:$CONTAINER_AIAA_SAMPLES_DIR nvcr.io/nvidia/clara-train-sdk:v3.0 start_aas.sh --debug 1`
+CONTAINERID=`docker run -d --name=nvidiaclara --runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=0 --shm-size=6g --ulimit memlock=-1 --ulimit stack=67108864 -it --rm  -p 5000:80 -v $MMARS_DIR:$CONTAINER_AIAA_MMAR_DIR -v $MMARS_DIR:/workspace/mmars -v $SAMPLES_DIR:/workspace/samples -v $SAMPLES_DIR:$CONTAINER_AIAA_SAMPLES_DIR nvcr.io/nvidia/clara-train-sdk:v3.0 start_aas.sh --debug 1`
 
 echo starting ... ${CONTAINERID}
 countdown=12
