@@ -36,7 +36,12 @@ cd ..
 ./stop.sh
 ```
 ## Add ML Model to "ML Models Library"
+![Add ML Model in Library](https://github.com/trainingdata/tdioinferenceserver/blob/master/documentation/static/images/AddMlModel.png)
 ## Create a Labeling Job
 As shown in this video https://youtu.be/cjiNQ9DCtLo:
 1. Create a labeling job with AI-Assisted annotation.
 2. After manually cleaning AI-assisted annotations, launch re-train ML Model
+## Re-Train ML Model
+![Re-Train ML Model](https://github.com/trainingdata/tdioinferenceserver/blob/master/documentation/static/images/ReTrainMlModel.png)
+## Re-Run Inferencing
+![Re-Run Inferencing](https://github.com/trainingdata/tdioinferenceserver/blob/master/documentation/static/images/ReRunInferencing.png)
